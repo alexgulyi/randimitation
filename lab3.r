@@ -16,15 +16,15 @@ g <- function(t)
   return(sapply(X = t, FUN = g_scalar))
 }
 
-ShotNoise <- function(t, num = N)
+ShotNoise <- function(t, num, inLambda = 1)
 {
   # returns value of x(t)
   
   # auxiliary random variable to build process: xi or eta
   # 2 different calls of aux_rvar provides independency
-  aux_rvar <- function(n = num)
+  aux_rvar <- function(n = num, lambda = inLambda)
   {
-    return(rexp(n, rate = Lambda))
+    return(rexp(n, rate = lambda))
   }
   
   # X = X1 + X2
@@ -34,37 +34,30 @@ ShotNoise <- function(t, num = N)
   return(X)
 }
 
-EvaluateTail <- function(s)
+EvaluateTail <- function(s, imitNum, over)
 {
   # calculating P{max[X(t)]>=s} with imitation
   p <- 0
-  for(i in 1:N)
+  for(i in 1:imitNum)
   {
-    Sample <- sapply(Timeline, ShotNoise, num = 100)
+    Sample <- sapply(over, ShotNoise, num = 100)
     M <- max(Sample)
     if(M >= s)
-      p <- p + 1/N
+      p <- p + 1/imitNum
   }
   return(p)
 }
 
-main <- function()
-{
-  library(ggplot2)
-  N <- 1000
-  Lambda <- 1
-  
-  Timeline = seq(from = 0, to = 10, by = 0.1)
-  ShotNoiseValues <- sapply(Timeline, ShotNoise)
-  qplot(x = Timeline,
-        y = ShotNoiseValues,
-        geom = "path",
-        main = "Shot Noise Process",
-        xlab = "t",
-        ylab = "x(t)")
-  print("Calculated value for P{max[X(t)]>=3}:")
-  print(EvaluateTail(3))
-}
+library(ggplot2)
+N <- 1000
 
-# script execution
-main()
+Timeline = seq(from = 0, to = 10, by = 0.1)
+ShotNoiseValues <- sapply(Timeline, ShotNoise, num = N)
+qplot(x = Timeline,
+      y = ShotNoiseValues,
+      geom = "path",
+      main = "Shot Noise Process",
+      xlab = "t",
+      ylab = "x(t)")
+print("Calculated value for P{max[X(t)]>=3}:")
+print(EvaluateTail(3, imitNum = N, over = Timeline))
